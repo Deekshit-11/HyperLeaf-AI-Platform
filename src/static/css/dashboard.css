@@ -1,0 +1,213 @@
+/* HyperLeaf Intelligence Platform — Dashboard Styles */
+/* Dark biopunk theme: deep navy + acid green + electric cyan */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg-primary:   #0a0f1a;
+  --bg-secondary: #0f1828;
+  --bg-card:      #111827;
+  --bg-card-hover:#16213a;
+  --border:       #1e2d45;
+  --accent-green: #a3e635;
+  --accent-cyan:  #22d3ee;
+  --accent-purple:#c084fc;
+  --accent-orange:#f97316;
+  --accent-pink:  #fb7185;
+  --text-primary: #e5e7eb;
+  --text-muted:   #6b7280;
+  --text-dim:     #374151;
+  --font-main:    'Space Grotesk', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+/* ── Global resets ── */
+html, body, [class*="css"] {
+  font-family: var(--font-main) !important;
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+  background: var(--bg-secondary) !important;
+  border-right: 1px solid var(--border) !important;
+}
+[data-testid="stSidebar"] * { color: var(--text-primary) !important; }
+[data-testid="stSidebarNavItems"] label:hover { color: var(--accent-green) !important; }
+
+/* ── Remove default Streamlit padding/header ── */
+[data-testid="stHeader"] { background: transparent !important; }
+.block-container { padding-top: 1.5rem !important; max-width: 1200px !important; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
+
+/* ── Hero Banner ── */
+.hero-banner {
+  background: linear-gradient(135deg, #0a0f1a 0%, #0d1f15 40%, #061a2a 100%);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent-green);
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(163,230,53,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-banner h1 {
+  font-size: 2.2rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  color: var(--text-primary) !important;
+  margin: 0 0 0.75rem !important;
+}
+.hero-banner .accent { color: var(--accent-green) !important; }
+.hero-banner p {
+  color: var(--text-muted) !important;
+  font-size: 0.95rem !important;
+  max-width: 560px;
+  line-height: 1.6;
+  margin: 0 !important;
+}
+
+/* ── Page Title ── */
+.page-title {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  color: var(--accent-green) !important;
+  margin-bottom: 1.5rem !important;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── KPI Cards ── */
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.kpi-icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.kpi-val  { font-size: 2rem; font-weight: 700; line-height: 1.1; font-family: var(--font-mono); }
+.kpi-label{ font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.3rem; }
+
+/* ── Flow Steps ── */
+.flow-step {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid;
+  border-radius: 8px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  transition: transform 0.2s;
+}
+.flow-step:hover { transform: translateY(-2px); }
+.flow-num   { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); line-height: 1; }
+.flow-title { font-size: 0.8rem; font-weight: 600; margin: 0.4rem 0 0.25rem; }
+.flow-desc  { font-size: 0.68rem; color: var(--text-muted); white-space: pre-line; line-height: 1.4; }
+
+/* ── Result Card ── */
+.result-card {
+  background: var(--bg-card);
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  animation: pulse-in 0.4s ease;
+}
+@keyframes pulse-in {
+  0%   { opacity:0; transform: scale(0.96); }
+  100% { opacity:1; transform: scale(1); }
+}
+.result-icon  { font-size: 3rem; margin-bottom: 0.5rem; }
+.result-label { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; }
+.result-score { font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* ── Empty State ── */
+.empty-state {
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+.empty-state p { margin-top: 0.75rem; font-size: 0.9rem; line-height: 1.6; }
+
+/* ── About Card ── */
+.about-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  height: 100%;
+}
+.about-card h3 { color: var(--accent-cyan) !important; font-size: 1rem !important; margin: 1rem 0 0.5rem !important; }
+.about-card h3:first-child { margin-top: 0 !important; }
+.about-card p, .about-card li { font-size: 0.88rem; color: var(--text-primary); line-height: 1.6; }
+.about-card ul { padding-left: 1.2rem; margin: 0.5rem 0; }
+.about-card li { margin-bottom: 0.3rem; }
+.about-card table tr { border-bottom: 1px solid var(--border); }
+.about-card table td { padding: 0.35rem 0.5rem; }
+
+/* ── Streamlit component overrides ── */
+.stButton > button {
+  background: linear-gradient(135deg, #1a3a1a, #1e4d1e) !important;
+  color: var(--accent-green) !important;
+  border: 1px solid var(--accent-green) !important;
+  border-radius: 8px !important;
+  font-family: var(--font-main) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  transition: all 0.2s !important;
+}
+.stButton > button:hover {
+  background: var(--accent-green) !important;
+  color: #0a0f1a !important;
+  box-shadow: 0 0 20px rgba(163,230,53,0.3) !important;
+}
+[data-testid="stFileUploader"] {
+  background: var(--bg-card) !important;
+  border: 2px dashed var(--border) !important;
+  border-radius: 10px !important;
+  padding: 1rem !important;
+}
+[data-testid="stMetricValue"] { color: var(--accent-green) !important; font-family: var(--font-mono) !important; }
+[data-testid="stDataFrame"] { background: var(--bg-card) !important; border-radius: 8px !important; }
+.stAlert { border-radius: 8px !important; }
+[data-testid="stProgress"] > div > div { background: var(--accent-green) !important; }
+
+/* ── Plotly chart containers ── */
+.js-plotly-plot .plotly { background: transparent !important; }
+
+/* ── Radio buttons in sidebar ── */
+[data-testid="stSidebar"] .stRadio label {
+  font-size: 0.88rem !important;
+  padding: 0.4rem 0.6rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: background 0.15s !important;
+}
+[data-testid="stSidebar"] .stRadio label:hover {
+  background: rgba(163,230,53,0.08) !important;
+  color: var(--accent-green) !important;
+}
+[data-testid="stSidebar"] .stRadio [aria-checked="true"] + div label {
+  color: var(--accent-green) !important;
+  background: rgba(163,230,53,0.12) !important;
+}

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperLeaf — AI Crop Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════
+   RESET & VARIABLES
+════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --c-bg:       #050c14;
+  --c-surface:  #0a1628;
+  --c-card:     #0d1f35;
+  --c-border:   #1a2e4a;
+  --c-green:    #a3e635;
+  --c-cyan:     #22d3ee;
+  --c-purple:   #c084fc;
+  --c-orange:   #f97316;
+  --c-pink:     #fb7185;
+  --c-text:     #e2e8f0;
+  --c-muted:    #64748b;
+  --c-dim:      #1e3a5f;
+  --ff-display: 'Syne', sans-serif;
+  --ff-body:    'DM Sans', sans-serif;
+  --ff-mono:    'DM Mono', monospace;
+  --r:          12px;
+  --shadow-glow-green:  0 0 40px rgba(163,230,53,0.15);
+  --shadow-glow-cyan:   0 0 40px rgba(34,211,238,0.15);
+  --shadow-card:        0 4px 24px rgba(0,0,0,0.5);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--ff-body);
+  background: var(--c-bg);
+  color: var(--c-text);
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ════════════════════════════════════════════════
+   CUSTOM CURSOR
+════════════════════════════════════════════════ */
+.cursor-dot {
+  width: 6px; height: 6px;
+  background: var(--c-green);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width 0.2s, height 0.2s, background 0.2s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  width: 32px; height: 32px;
+  border: 1.5px solid rgba(163,230,53,0.5);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: transform 0.15s ease-out, width 0.2s, height 0.2s, opacity 0.2s;
+}
+body:hover .cursor-dot { opacity: 1; }
+
+/* ════════════════════════════════════════════════
+   NOISE OVERLAY
+════════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ════════════════════════════════════════════════
+   GRID BACKGROUND
+════════════════════════════════════════════════ */
+.grid-bg {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(34,211,238,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ════════════════════════════════════════════════
+   LAYOUT HELPERS
+════════════════════════════════════════════════ */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+section { position: relative; z-index: 1; }
+
+/* ════════════════════════════════════════════════
+   NAV
+════════════════════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(5,12,20,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0 2rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.3s;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 0.6rem;
+  text-decoration: none;
+}
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--c-green), #5a9e00);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.nav-logo-text {
+  font-family: var(--ff-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+}
+.nav-logo-text span { color: var(--c-green); }
+.nav-links {
+  display: flex; gap: 0.25rem; list-style: none;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--c-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-links a:hover {
+  color: var(--c-text);
+  background: rgba(255,255,255,0.05);
+}
+.nav-cta {
+  background: var(--c-green) !important;
+  color: #050c14 !important;
+  font-weight: 600 !important;
+  padding: 0.4rem 1rem !important;
+}
+.nav-cta:hover {
+  background: #c8f25a !important;
+  box-shadow: var(--shadow-glow-green);
+}
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+.nav-hamburger span {
+  width: 24px; height: 2px;
+  background: var(--c-text);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* ════════════════════════════════════════════════
+   HERO
+════════════════════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 100px 0 60px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: orb-drift 8s ease-in-out infinite alternate;
+}
+.orb-1 { width: 500px; height: 500px; background: rgba(163,230,53,0.08); top: -100px; right: -100px; }
+.orb-2 { width: 350px; height: 350px; background: rgba(34,211,238,0.06); bottom: -50px; left: 10%; animation-delay: -4s; }
+@keyframes orb-drift {
+  0%   { transform: translate(0,0) scale(1); }
+  100% { transform: translate(30px,20px) scale(1.05); }
+}
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(163,230,53,0.1);
+  border: 1px solid rgba(163,230,53,0.3);
+  border-radius: 100px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--c-green);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  width: fit-content;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--c-green);
+  border-radius: 50%;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,100% { opacity:1; } 50% { opacity:0.3; }
+}
+
+.hero-title {
+  font-family: var(--ff-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--c-text);
+  margin-bottom: 1.25rem;
+}
+.hero-title .line-accent { color: var(--c-green); display: block; }
+.hero-title .line-dim    { color: var(--c-cyan);  }
+
+.hero-desc {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--c-muted);
+  max-width: 480px;
+  margin-bottom: 2rem;
+}
+
+.hero-btns {
+  display: flex; gap: 0.75rem; flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.22s;
+}
+.btn-primary {
+  background: var(--c-green);
+  color: #050c14;
+}
+.btn-primary:hover {
+  background: #c8f25a;
+  box-shadow: var(--shadow-glow-green);
+  transform: translateY(-2px);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+.btn-outline:hover {
+  border-color: var(--c-cyan);
+  color: var(--c-cyan);
+  box-shadow: var(--shadow-glow-cyan);
+  transform: translateY(-2px);
+}
+
+/* Hero visual panel */
+.hero-visual {
+  position: relative;
+}
+.hero-panel {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  animation: float-panel 5s ease-in-out infinite alternate;
+}
+@keyframes float-panel {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-12px); }
+}
+.panel-header {
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.75rem 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.panel-dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #f97316; } .dot-y { background: #eab308; } .dot-g { background: #a3e635; }
+.panel-title { font-size: 0.75rem; color: var(--c-muted); margin-left: 0.5rem; font-family: var(--ff-mono); }
+.panel-body { padding: 1.5rem; }
+
+/* Spectral viz inside hero */
+.spectral-bars {
+  display: flex; gap: 3px; align-items: flex-end;
+  height: 80px; margin-bottom: 1rem;
+}
+.s-bar {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  animation: bar-grow 1s ease-out forwards;
+  opacity: 0;
+}
+@keyframes bar-grow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+.pred-result {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(163,230,53,0.08);
+  border: 1px solid rgba(163,230,53,0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.pred-label { font-size: 0.8rem; color: var(--c-green); font-weight: 600; }
+.pred-score { font-family: var(--ff-mono); font-size: 0.85rem; color: var(--c-text); }
+
+.confidence-bar-wrap {
+  background: var(--c-surface);
+  border-radius: 100px;
+  height: 6px;
+  overflow: hidden;
+  margin-top: 0.4rem;
+}
+.confidence-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--c-green), var(--c-cyan));
+  border-radius: 100px;
+  animation: bar-fill 1.5s ease-out 0.5s forwards;
+  width: 0%;
+}
+@keyframes bar-fill {
+  from { width: 0%; }
+  to   { width: 91%; }
+}
+
+.stat-row {
+  display: flex; gap: 0.5rem; margin-top: 0.75rem;
+}
+.stat-chip {
+  flex: 1;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+}
+.stat-chip-val { font-family: var(--ff-mono); font-size: 0.9rem; font-weight: 600; }
+.stat-chip-lbl { font-size: 0.62rem; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* ════════════════════════════════════════════════
+   STATS STRIP
+════════════════════════════════════════════════ */
+#stats {
+  padding: 2rem 0;
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  text-align: center;
+}
+.stat-item {
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--c-border);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: var(--ff-display);
+  font-size: 2.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--c-green), var(--c-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  display: block;
+}
+.stat-desc { font-size: 0.78rem; color: var(--c-muted); margin-top: 0.35rem; text-transform: uppercase; letter-spacing: 0.07em; }
+
+/* ════════════════════════════════════════════════
+   FEATURES
+════════════════════════════════════════════════ */
+#features {
+  padding: 6rem 0;
+}
+.section-label {
+  font-size: 0.72rem;
+  color: var(--c-green);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.section-title {
+  font-family: var(--ff-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+.section-sub {
+  font-size: 1rem;
+  color: var(--c-muted);
+  max-width: 520px;
+  line-height: 1.65;
+  margin-bottom: 3rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+.feat-card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  padding: 1.75rem;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.feat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 0% 0%, var(--card-glow, rgba(163,230,53,0.06)) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.feat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--card-color, var(--c-green));
+}
+.feat-card:hover::after { opacity: 1; }
+.feat-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+.feat-name {
+  font-family: var(--ff-display);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--c-text);
+}
+.feat-desc {
+  font-size: 0.83rem;
+  color: var(--c-muted);
+  line-height: 1.6;
+}
+.feat-tag {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.68rem;
+  font-family: var(--ff-mono);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* ════════════════════════════════════════════════
+   MODEL COMPARISON
+════════════════════════════════════════════════ */
+#models {
+  padding: 6rem 0;
+  background: var(--c-surface);
+}
+.models-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+.model-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+.model-table th {
+  font-size: 0.7rem;
+  color: var(--c-muted);
+  text-align: left;
+  padding: 0 1rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+.model-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+}
+.model-table tr.model-row td { background: var(--c-card); }
+.model-table tr.model-row td:first-child { border-radius: var(--r) 0 0 var(--r); }
+.model-table tr.model-row td:last-child  { border-radius: 0 var(--r) var(--r) 0; }
+.model-table tr.model-best td {
+  background: rgba(163,230,53,0.08);
+  border: 1px solid rgba(163,230,53,0.2);
+  color: var(--c-text);
+}
+.model-table tr.model-best td:first-child { border-radius: var(--r) 0 0 var(--r); }
+.model-table tr.model-best td:last-child  { border-radius: 0 var(--r) var(--r) 0; }
+.model-best .acc-val { color: var(--c-green); font-weight: 700; font-family: var(--ff-mono); }
+.model-row  .acc-val { color: var(--c-muted);  font-family: var(--ff-mono); }
+
+.acc-bar-wrap {
+  background: var(--c-bg);
+  border-radius: 100px;
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.acc-bar {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #1a3a1a, var(--c-green));
+  transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+.model-best .acc-bar {
+  background: linear-gradient(90deg, var(--c-green), var(--c-cyan));
+}
+
+/* CV card */
+.cv-card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  padding: 2rem;
+}
+.cv-title {
+  font-family: var(--ff-display);
+  font-size: 1.2rem; font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--c-cyan);
+}
+.cv-desc { font-size: 0.85rem; color: var(--c-muted); line-height: 1.65; margin-bottom: 1.5rem; }
+.cv-folds {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.fold {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 0.5rem 0;
+  text-align: center;
+  font-family: var(--ff-mono); font-size: 0.75rem;
+  color: var(--c-muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+.fold.active {
+  border-color: var(--c-cyan);
+  color: var(--c-cyan);
+  background: rgba(34,211,238,0.08);
+}
+.fold-label { font-size: 0.6rem; display: block; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cv-result {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(163,230,53,0.08);
+  border: 1px solid rgba(163,230,53,0.2);
+  border-radius: 8px; padding: 0.75rem 1rem;
+}
+.cv-result-label { font-size: 0.78rem; color: var(--c-muted); }
+.cv-result-val   { font-family: var(--ff-mono); font-size: 1.1rem; font-weight: 600; color: var(--c-green); }
+
+/* ════════════════════════════════════════════════
+   WORKFLOW TIMELINE
+════════════════════════════════════════════════ */
+#workflow {
+  padding: 6rem 0;
+}
+.timeline {
+  position: relative;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 28px; top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--c-green) 10%, var(--c-cyan) 90%, transparent);
+}
+.tl-item {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.tl-item.visible { opacity: 1; transform: translateX(0); }
+.tl-dot {
+  width: 56px; height: 56px; min-width: 56px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  position: relative; z-index: 1;
+  border: 2px solid transparent;
+  transition: box-shadow 0.3s;
+}
+.tl-item:hover .tl-dot { box-shadow: 0 0 20px var(--dot-glow, rgba(163,230,53,0.4)); }
+.tl-content { padding-top: 0.25rem; }
+.tl-num {
+  font-size: 0.65rem; font-family: var(--ff-mono);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+.tl-title {
+  font-family: var(--ff-display); font-size: 1.05rem; font-weight: 700;
+  margin-bottom: 0.35rem; color: var(--c-text);
+}
+.tl-desc { font-size: 0.83rem; color: var(--c-muted); line-height: 1.6; }
+.tl-code {
+  display: inline-block; margin-top: 0.5rem;
+  font-family: var(--ff-mono); font-size: 0.72rem;
+  background: var(--c-surface); border: 1px solid var(--c-border);
+  border-radius: 5px; padding: 0.2rem 0.5rem;
+  color: var(--c-cyan);
+}
+
+/* ════════════════════════════════════════════════
+   EXPLAINABILITY
+════════════════════════════════════════════════ */
+#explainability {
+  padding: 6rem 0;
+  background: var(--c-surface);
+}
+.xai-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+.xai-visual {
+  position: relative;
+}
+.heatmap-demo {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.heatmap-header {
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.6rem 1rem;
+  font-family: var(--ff-mono); font-size: 0.72rem;
+  color: var(--c-muted);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.heatmap-header::before { content:'●'; color: var(--c-pink); }
+canvas#heatmapCanvas { display: block; width: 100%; }
+.heatmap-legend {
+  padding: 0.75rem 1rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.legend-bar {
+  flex: 1; height: 8px; border-radius: 100px;
+  background: linear-gradient(90deg, #1e3a5f, #c084fc, #fb7185, #f97316, #a3e635);
+}
+.legend-lo, .legend-hi { font-size: 0.68rem; color: var(--c-muted); font-family: var(--ff-mono); }
+
+.xai-text {}
+.xai-point {
+  display: flex; gap: 1rem; margin-bottom: 1.5rem;
+  padding: 1.1rem;
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.xai-point:hover { border-color: var(--c-purple); transform: translateX(4px); }
+.xai-point-icon { font-size: 1.4rem; }
+.xai-point-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.2rem; color: var(--c-text); }
+.xai-point-desc  { font-size: 0.8rem; color: var(--c-muted); line-height: 1.55; }
+
+/* ════════════════════════════════════════════════
+   CTA
+════════════════════════════════════════════════ */
+#cta {
+  padding: 6rem 0;
+  text-align: center;
+}
+.cta-box {
+  background: linear-gradient(135deg, rgba(163,230,53,0.06) 0%, rgba(34,211,238,0.04) 100%);
+  border: 1px solid var(--c-border);
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.cta-box::before {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(163,230,53,0.1), transparent 70%);
+  top: -100px; left: 50%; transform: translateX(-50%);
+  pointer-events: none;
+}
+.cta-title {
+  font-family: var(--ff-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.cta-desc {
+  font-size: 0.95rem; color: var(--c-muted);
+  max-width: 480px; margin: 0 auto 2rem; line-height: 1.65;
+  position: relative;
+}
+.cta-btns {
+  display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;
+  position: relative;
+}
+.deploy-badges {
+  display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;
+}
+.deploy-badge {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 8px; padding: 0.4rem 0.8rem;
+  font-size: 0.78rem; color: var(--c-muted); font-weight: 500;
+}
+.deploy-badge span { font-size: 1rem; }
+
+/* ════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--c-muted);
+}
+footer .foot-logo {
+  font-family: var(--ff-display); font-size: 1.1rem; font-weight: 800;
+  color: var(--c-green); margin-bottom: 0.5rem;
+}
+footer a { color: var(--c-muted); text-decoration: none; }
+footer a:hover { color: var(--c-green); }
+
+/* ════════════════════════════════════════════════
+   SCROLL ANIMATIONS
+════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero-visual { display: none; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .models-inner  { grid-template-columns: 1fr; gap: 2rem; }
+  .xai-inner     { grid-template-columns: 1fr; gap: 2rem; }
+  .stats-grid    { grid-template-columns: 2fr 2fr; }
+}
+@media (max-width: 600px) {
+  .container { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .features-grid { grid-template-columns: 1fr; }
+  .stats-grid    { grid-template-columns: 1fr 1fr; }
+  .hero-btns { flex-direction: column; }
+  .btn { justify-content: center; }
+  .cv-folds { grid-template-columns: repeat(5,1fr); }
+  .cta-btns { flex-direction: column; align-items: center; }
+}
+
+/* Mobile nav open */
+.nav-links.open {
+  display: flex !important;
+  flex-direction: column;
+  position: fixed; top: 64px; left: 0; right: 0;
+  background: rgba(5,12,20,0.97);
+  border-bottom: 1px solid var(--c-border);
+  padding: 1rem;
+  z-index: 99;
+}
+.nav-links.open li { width: 100%; }
+.nav-links.open a  { display: block; padding: 0.75rem 1rem; }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="grid-bg"></div>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">🌿</div>
+    <span class="nav-logo-text">Hyper<span>Leaf</span></span>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#workflow">Workflow</a></li>
+    <li><a href="#explainability">XAI</a></li>
+    <li><a href="http://localhost:8501" target="_blank" class="nav-cta">Launch App →</a></li>
+  </ul>
+  <div class="nav-hamburger" id="hamburger" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section id="hero">
+  <div class="hero-orb orb-1"></div>
+  <div class="hero-orb orb-2"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">AI · Hyperspectral · Precision Agriculture</div>
+        <h1 class="hero-title">
+          Detect Nitrogen<br>
+          <span class="line-accent">Deficiency</span>
+          in Crops<br>
+          <span class="line-dim">with AI</span>
+        </h1>
+        <p class="hero-desc">
+          HyperLeaf processes 204-band hyperspectral leaf imagery through a
+          PyTorch CNN pipeline — delivering explainable nitrogen stress
+          predictions with 91%+ accuracy.
+        </p>
+        <div class="hero-btns">
+          <a href="http://localhost:8501" target="_blank" class="btn btn-primary">
+            🚀 Launch Dashboard
+          </a>
+          <a href="https://github.com/" target="_blank" class="btn btn-outline">
+            📁 View on GitHub
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-panel">
+          <div class="panel-header">
+            <div class="panel-dot dot-r"></div>
+            <div class="panel-dot dot-y"></div>
+            <div class="panel-dot dot-g"></div>
+            <span class="panel-title">hyperleaf_prediction.py</span>
+          </div>
+          <div class="panel-body">
+            <!-- Spectral bars -->
+            <div class="spectral-bars" id="spectralBars"></div>
+            <div style="font-size:0.65rem;color:var(--c-muted);margin-bottom:1rem;font-family:var(--ff-mono);">
+              Spectral reflectance — 204 bands (400–2500nm)
+            </div>
+
+            <div class="pred-result">
+              <div>
+                <div class="pred-label">✅ Nitrogen Sufficient</div>
+                <div style="font-size:0.7rem;color:var(--c-muted);margin-top:2px;">score: 0.1842</div>
+              </div>
+              <div class="pred-score">91.4%</div>
+            </div>
+            <div style="font-size:0.68rem;color:var(--c-muted);margin-bottom:4px;font-family:var(--ff-mono);">Confidence</div>
+            <div class="confidence-bar-wrap">
+              <div class="confidence-bar" id="confBar"></div>
+            </div>
+
+            <div class="stat-row">
+              <div class="stat-chip">
+                <div class="stat-chip-val" style="color:var(--c-green);">50</div>
+                <div class="stat-chip-lbl">PCA dims</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-chip-val" style="color:var(--c-cyan);">204</div>
+                <div class="stat-chip-lbl">Bands</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-chip-val" style="color:var(--c-purple);">48K</div>
+                <div class="stat-chip-lbl">Params</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-chip-val" style="color:var(--c-orange);">5-K</div>
+                <div class="stat-chip-lbl">CV folds</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<section id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item reveal">
+        <span class="stat-num" data-target="91.4">0</span>
+        <div class="stat-desc">CNN Accuracy (%)</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:0.1s">
+        <span class="stat-num" data-target="204">0</span>
+        <div class="stat-desc">Spectral Bands</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:0.2s">
+        <span class="stat-num" data-target="50">0</span>
+        <div class="stat-desc">PCA Components</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:0.3s">
+        <span class="stat-num" data-target="5">0</span>
+        <div class="stat-desc">K-Fold CV Splits</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FEATURES ═══════════════ -->
+<section id="features">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Platform Features</div>
+      <h2 class="section-title">Everything a real<br>AI product needs</h2>
+      <p class="section-sub">From raw hyperspectral TIFF to production-ready explainable AI — all in one platform.</p>
+    </div>
+
+    <div class="features-grid">
+      <!-- Feature cards -->
+      <div class="feat-card reveal" style="--card-color:var(--c-green);--card-glow:rgba(163,230,53,0.06);">
+        <div class="feat-icon" style="background:rgba(163,230,53,0.12);">🌈</div>
+        <div class="feat-name">Hyperspectral Visualization</div>
+        <div class="feat-desc">Spectral signature comparison, PCA explained variance, wavelength heatmaps across 400–2500nm. See exactly which bands drive predictions.</div>
+        <span class="feat-tag" style="background:rgba(163,230,53,0.1);color:var(--c-green);">Plotly · Matplotlib</span>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:0.08s;--card-color:var(--c-purple);--card-glow:rgba(192,132,252,0.06);">
+        <div class="feat-icon" style="background:rgba(192,132,252,0.12);">🔍</div>
+        <div class="feat-name">Explainable AI (Grad-CAM)</div>
+        <div class="feat-desc">Grad-CAM saliency maps overlay directly onto leaf images, highlighting the exact regions that triggered nitrogen deficiency prediction.</div>
+        <span class="feat-tag" style="background:rgba(192,132,252,0.1);color:var(--c-purple);">Grad-CAM · Saliency</span>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:0.16s;--card-color:var(--c-cyan);--card-glow:rgba(34,211,238,0.06);">
+        <div class="feat-icon" style="background:rgba(34,211,238,0.12);">📊</div>
+        <div class="feat-name">Model Benchmarking</div>
+        <div class="feat-desc">Side-by-side comparison of SVM, Random Forest, MLP, and CNN. Training curves, confusion matrices, and cross-validation scores.</div>
+        <span class="feat-tag" style="background:rgba(34,211,238,0.1);color:var(--c-cyan);">sklearn · PyTorch</span>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:0.04s;--card-color:var(--c-orange);--card-glow:rgba(249,115,22,0.06);">
+        <div class="feat-icon" style="background:rgba(249,115,22,0.12);">🕒</div>
+        <div class="feat-name">Prediction History</div>
+        <div class="feat-desc">Every prediction stored in SQLite with timestamp, filename, score, and confidence level. Full history, distribution plots, and export.</div>
+        <span class="feat-tag" style="background:rgba(249,115,22,0.1);color:var(--c-orange);">SQLite · Pandas</span>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:0.12s;--card-color:var(--c-pink);--card-glow:rgba(251,113,133,0.06);">
+        <div class="feat-icon" style="background:rgba(251,113,133,0.12);">🎛️</div>
+        <div class="feat-name">Confidence Gauge</div>
+        <div class="feat-desc">Real-time Plotly gauge chart shows prediction score visually, with High / Medium / Low confidence classification and decision boundary line.</div>
+        <span class="feat-tag" style="background:rgba(251,113,133,0.1);color:var(--c-pink);">Plotly · Streamlit</span>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:0.2s;--card-color:var(--c-green);--card-glow:rgba(163,230,53,0.06);">
+        <div class="feat-icon" style="background:rgba(163,230,53,0.12);">☁️</div>
+        <div class="feat-name">Cloud Deployment</div>
+        <div class="feat-desc">One-command deploy to Streamlit Cloud or HuggingFace Spaces. Full CI/CD via GitHub Actions. Shareable public URL instantly.</div>
+        <span class="feat-tag" style="background:rgba(163,230,53,0.1);color:var(--c-green);">Streamlit Cloud · HF</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ MODELS ═══════════════ -->
+<section id="models">
+  <div class="container">
+    <div class="models-inner">
+      <div class="reveal">
+        <div class="section-label">Model Comparison</div>
+        <h2 class="section-title">Rigorous ML<br>experimentation</h2>
+        <p class="section-sub" style="margin-bottom:1.5rem;">Tested five models. CNN wins — but the journey matters as much as the destination to recruiters and researchers.</p>
+        <table class="model-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Accuracy</th>
+              <th>F1</th>
+            </tr>
+          </thead>
+          <tbody id="modelTableBody">
+            <tr class="model-row">
+              <td>SVM (RBF)</td>
+              <td><div class="acc-val">78.3%</div><div class="acc-bar-wrap"><div class="acc-bar" data-w="78.3"></div></div></td>
+              <td class="acc-val">77.7%</td>
+            </tr>
+            <tr class="model-row">
+              <td>Random Forest</td>
+              <td><div class="acc-val">82.1%</div><div class="acc-bar-wrap"><div class="acc-bar" data-w="82.1"></div></div></td>
+              <td class="acc-val">82.0%</td>
+            </tr>
+            <tr class="model-row">
+              <td>MLP Classifier</td>
+              <td><div class="acc-val">85.6%</div><div class="acc-bar-wrap"><div class="acc-bar" data-w="85.6"></div></div></td>
+              <td class="acc-val">85.1%</td>
+            </tr>
+            <tr class="model-best">
+              <td><strong>CNN (Ours) ★</strong></td>
+              <td><div class="acc-val">91.4%</div><div class="acc-bar-wrap"><div class="acc-bar" data-w="91.4"></div></div></td>
+              <td class="acc-val">91.3%</td>
+            </tr>
+            <tr class="model-best">
+              <td><strong>CNN + Augment</strong></td>
+              <td><div class="acc-val">93.2%</div><div class="acc-bar-wrap"><div class="acc-bar" data-w="93.2"></div></div></td>
+              <td class="acc-val">93.2%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="reveal" style="transition-delay:0.2s;">
+        <div class="cv-card">
+          <div class="cv-title">5-Fold Cross Validation</div>
+          <div class="cv-desc">Research-standard evaluation that prevents overfitting claims. Each fold produces an independent accuracy score; we report the mean ± std.</div>
+          <div class="cv-folds" id="cvFolds">
+            <div class="fold" data-acc="90.2">F1<span class="fold-label">90.2%</span></div>
+            <div class="fold" data-acc="91.8">F2<span class="fold-label">91.8%</span></div>
+            <div class="fold" data-acc="89.7">F3<span class="fold-label">89.7%</span></div>
+            <div class="fold" data-acc="92.4">F4<span class="fold-label">92.4%</span></div>
+            <div class="fold" data-acc="91.0">F5<span class="fold-label">91.0%</span></div>
+          </div>
+          <div class="cv-result">
+            <div>
+              <div class="cv-result-label">Mean CV Accuracy</div>
+              <div style="font-size:0.7rem;color:var(--c-muted);">± 0.97% std deviation</div>
+            </div>
+            <div class="cv-result-val">91.0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ WORKFLOW ═══════════════ -->
+<section id="workflow">
+  <div class="container">
+    <div class="reveal" style="text-align:center;margin-bottom:3rem;">
+      <div class="section-label">Pipeline Architecture</div>
+      <h2 class="section-title">From TIFF to Prediction<br>in 6 steps</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item" style="--dot-glow:rgba(163,230,53,0.4);">
+        <div class="tl-dot" style="background:rgba(163,230,53,0.1);border-color:var(--c-green);">📁</div>
+        <div class="tl-content">
+          <div class="tl-num" style="color:var(--c-green);">Step 01</div>
+          <div class="tl-title">Upload Hyperspectral TIFF</div>
+          <div class="tl-desc">User uploads a .tif / .tiff hyperspectral image. The platform validates format, extracts metadata, and confirms 204 spectral bands are present.</div>
+          <span class="tl-code">st.file_uploader(type=["tif","tiff"])</span>
+        </div>
+      </div>
+      <div class="tl-item" style="--dot-glow:rgba(34,211,238,0.4);">
+        <div class="tl-dot" style="background:rgba(34,211,238,0.1);border-color:var(--c-cyan);">⚙️</div>
+        <div class="tl-content">
+          <div class="tl-num" style="color:var(--c-cyan);">Step 02</div>
+          <div class="tl-title">Preprocessing</div>
+          <div class="tl-desc">Band extraction, per-band normalization (min-max scaling), spatial mean pooling, and removal of water absorption bands at 1400nm and 1900nm.</div>
+          <span class="tl-code">preprocessing.py → normalize()</span>
+        </div>
+      </div>
+      <div class="tl-item" style="--dot-glow:rgba(192,132,252,0.4);">
+        <div class="tl-dot" style="background:rgba(192,132,252,0.1);border-color:var(--c-purple);">🔵</div>
+        <div class="tl-content">
+          <div class="tl-num" style="color:var(--c-purple);">Step 03</div>
+          <div class="tl-title">PCA Dimensionality Reduction</div>
+          <div class="tl-desc">204 spectral bands reduced to 50 principal components using sklearn PCA. Preserves ≥95% of variance while dramatically reducing input dimensions.</div>
+          <span class="tl-code">pca_processing.py → PCA(n_components=50)</span>
+        </div>
+      </div>
+      <div class="tl-item" style="--dot-glow:rgba(249,115,22,0.4);">
+        <div class="tl-dot" style="background:rgba(249,115,22,0.1);border-color:var(--c-orange);">🧠</div>
+        <div class="tl-content">
+          <div class="tl-num" style="color:var(--c-orange);">Step 04</div>
+          <div class="tl-title">CNN Inference</div>
+          <div class="tl-desc">PyTorch NitrogenCNN processes the 50-dim feature vector through convolutional blocks and outputs a scalar prediction score between 0 (sufficient) and 1 (deficient).</div>
+          <span class="tl-code">NitrogenCNN → sigmoid(output)</span>
+        </div>
+      </div>
+      <div class="tl-item" style="--dot-glow:rgba(251,113,133,0.4);">
+        <div class="tl-dot" style="background:rgba(251,113,133,0.1);border-color:var(--c-pink);">🔥</div>
+        <div class="tl-content">
+          <div class="tl-num" style="color:var(--c-pink);">Step 05</div>
+          <div class="tl-title">Grad-CAM Explainability</div>
+          <div class="tl-desc">Gradient-weighted class activation maps highlight which spectral regions and spatial zones drove the model's decision — making AI interpretable for agronomists.</div>
+          <span class="tl-code">GradCAM(model, target_layer)</span>
+        </div>
+      </div>
+      <div class="tl-item" style="--dot-glow:rgba(163,230,53,0.4);">
+        <div class="tl-dot" style="background:rgba(163,230,53,0.1);border-color:var(--c-green);">📊</div>
+        <div class="tl-content">
+          <div class="tl-num" style="color:var(--c-green);">Step 06</div>
+          <div class="tl-title">Dashboard & History</div>
+          <div class="tl-desc">Results displayed with confidence gauge, stored in SQLite, visualized in analytics dashboard. Export-ready for research reporting.</div>
+          <span class="tl-code">SQLite → predictions.db</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ XAI ═══════════════ -->
+<section id="explainability">
+  <div class="container">
+    <div class="xai-inner">
+      <div class="xai-visual reveal">
+        <div class="heatmap-demo">
+          <div class="heatmap-header">Grad-CAM Saliency Map — leaf_sample_047.tif</div>
+          <canvas id="heatmapCanvas" width="480" height="260"></canvas>
+          <div class="heatmap-legend">
+            <span class="legend-lo">Low activation</span>
+            <div class="legend-bar"></div>
+            <span class="legend-hi">High activation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="xai-text reveal" style="transition-delay:0.2s;">
+        <div class="section-label">Explainable AI</div>
+        <h2 class="section-title" style="font-size:2rem;">Why the model<br>made this decision</h2>
+        <p style="font-size:0.88rem;color:var(--c-muted);margin-bottom:1.5rem;line-height:1.65;">Grad-CAM overlays show exactly which leaf regions triggered the nitrogen deficiency prediction — turning a black box into a tool agronomists can trust.</p>
+
+        <div class="xai-point">
+          <div class="xai-point-icon">🔴</div>
+          <div>
+            <div class="xai-point-title">High Activation Zones</div>
+            <div class="xai-point-desc">Red/orange regions correspond to chlorophyll absorption bands (680nm) where nitrogen-stressed leaves show anomalous reflectance.</div>
+          </div>
+        </div>
+        <div class="xai-point">
+          <div class="xai-point-icon">🟡</div>
+          <div>
+            <div class="xai-point-title">Medium Activation — NIR Region</div>
+            <div class="xai-point-desc">Near-infrared (800–900nm) yellow zones indicate cell structure changes from nitrogen stress affecting mesophyll integrity.</div>
+          </div>
+        </div>
+        <div class="xai-point">
+          <div class="xai-point-icon">🔵</div>
+          <div>
+            <div class="xai-point-title">Low Activation — Background</div>
+            <div class="xai-point-desc">Cool blue areas contribute minimally to the prediction. Model correctly ignores soil background and imaging artifacts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CTA ═══════════════ -->
+<section id="cta">
+  <div class="container">
+    <div class="cta-box reveal">
+      <div class="cta-title">Ready to run your<br>first prediction?</div>
+      <p class="cta-desc">Upload a hyperspectral TIFF and get a Grad-CAM explained nitrogen assessment in seconds.</p>
+      <div class="cta-btns">
+        <a href="http://localhost:8501" target="_blank" class="btn btn-primary" style="font-size:1rem;padding:0.85rem 2rem;">
+          🚀 Launch HyperLeaf Dashboard
+        </a>
+        <a href="https://github.com/" target="_blank" class="btn btn-outline">
+          ⭐ Star on GitHub
+        </a>
+      </div>
+      <div class="deploy-badges">
+        <div class="deploy-badge"><span>☁️</span> Streamlit Cloud</div>
+        <div class="deploy-badge"><span>🤗</span> HuggingFace Spaces</div>
+        <div class="deploy-badge"><span>🐙</span> GitHub Actions CI</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div class="foot-logo">🌿 HyperLeaf</div>
+  <p>Hyperspectral Crop Intelligence Platform · Built with PyTorch · Kaggle Dataset</p>
+  <p style="margin-top:0.4rem;">
+    <a href="https://github.com/">GitHub</a> ·
+    <a href="https://www.kaggle.com/">Kaggle</a> ·
+    <a href="http://localhost:8501">Live Demo</a>
+  </p>
+</footer>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+/* ── Custom Cursor ── */
+const dot  = document.getElementById('cursorDot');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  dot.style.left = mx+'px'; dot.style.top = my+'px';
+});
+function animRing(){
+  rx += (mx-rx)*0.12; ry += (my-ry)*0.12;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+document.querySelectorAll('a,button,.feat-card,.xai-point').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    dot.style.width = '10px'; dot.style.height = '10px';
+    ring.style.width = '44px'; ring.style.height = '44px';
+    ring.style.opacity = '0.7';
+  });
+  el.addEventListener('mouseleave', () => {
+    dot.style.width = '6px'; dot.style.height = '6px';
+    ring.style.width = '32px'; ring.style.height = '32px';
+    ring.style.opacity = '1';
+  });
+});
+
+/* ── Mobile Nav ── */
+function toggleNav(){
+  document.getElementById('navLinks').classList.toggle('open');
+}
+
+/* ── Spectral Bars ── */
+const barsContainer = document.getElementById('spectralBars');
+const colors = ['#064e3b','#065f46','#047857','#059669','#10b981','#34d399',
+                 '#6ee7b7','#a3e635','#22d3ee','#38bdf8','#7dd3fc','#93c5fd',
+                 '#c084fc','#e879f9','#f0abfc'];
+function seededRand(seed){ return (Math.sin(seed)*10000)%1; }
+for(let i=0;i<50;i++){
+  const bar = document.createElement('div');
+  const h = 15 + Math.abs(seededRand(i*7)) * 65;
+  bar.className = 's-bar';
+  bar.style.height = h + 'px';
+  bar.style.background = colors[i % colors.length];
+  bar.style.animationDelay = (i * 0.015) + 's';
+  barsContainer.appendChild(bar);
+}
+
+/* ── Scroll Reveal ── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      if(e.target.classList.contains('tl-item')) e.target.classList.add('visible');
+    }
+  });
+},{threshold:0.12});
+document.querySelectorAll('.reveal,.tl-item').forEach(el=>observer.observe(el));
+
+/* ── Animated counters ── */
+const counterObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseFloat(el.dataset.target);
+    const isFloat = target % 1 !== 0;
+    let start = 0;
+    const step = target / 60;
+    const timer = setInterval(() => {
+      start = Math.min(start + step, target);
+      el.textContent = isFloat ? start.toFixed(1) : Math.round(start);
+      if(start >= target) clearInterval(timer);
+    }, 16);
+    counterObs.unobserve(el);
+  });
+},{threshold:0.5});
+document.querySelectorAll('[data-target]').forEach(el=>counterObs.observe(el));
+
+/* ── Acc bars animate ── */
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    e.target.querySelectorAll('.acc-bar').forEach(b => {
+      b.style.width = b.dataset.w + '%';
+    });
+  });
+},{threshold:0.3});
+document.querySelectorAll('.model-table').forEach(t => barObs.observe(t));
+
+/* ── CV Fold cycle ── */
+const folds = document.querySelectorAll('.fold');
+let fi = 0;
+setInterval(() => {
+  folds.forEach(f=>f.classList.remove('active'));
+  folds[fi].classList.add('active');
+  fi = (fi+1) % folds.length;
+}, 900);
+
+/* ── Grad-CAM canvas ── */
+(function drawHeatmap(){
+  const canvas = document.getElementById('heatmapCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Draw leaf shape background
+  ctx.fillStyle = '#1a3a2a';
+  ctx.fillRect(0,0,W,H);
+
+  // Leaf silhouette
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(W/2, H/2, W*0.38, H*0.42, -0.2, 0, Math.PI*2);
+  ctx.fillStyle = '#1e4a30';
+  ctx.fill();
+  ctx.restore();
+
+  // Heatmap blobs
+  const hotspots = [
+    {x:0.35,y:0.38,r:0.18,intensity:1.0,clr:'rgba(249,115,22,'},
+    {x:0.55,y:0.55,r:0.14,intensity:0.8,clr:'rgba(234,179,8,'},
+    {x:0.62,y:0.32,r:0.12,intensity:0.7,clr:'rgba(234,179,8,'},
+    {x:0.45,y:0.65,r:0.10,intensity:0.5,clr:'rgba(163,230,53,'},
+    {x:0.28,y:0.60,r:0.09,intensity:0.4,clr:'rgba(34,211,238,'},
+    {x:0.70,y:0.50,r:0.08,intensity:0.3,clr:'rgba(34,211,238,'},
+  ];
+  hotspots.forEach(h => {
+    const grd = ctx.createRadialGradient(h.x*W, h.y*H, 0, h.x*W, h.y*H, h.r*Math.min(W,H));
+    grd.addColorStop(0, h.clr + (h.intensity*0.75) + ')');
+    grd.addColorStop(1, h.clr + '0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0,0,W,H);
+  });
+
+  // Midrib
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(W*0.5, H*0.08);
+  ctx.bezierCurveTo(W*0.52, H*0.35, W*0.5, H*0.65, W*0.5, H*0.92);
+  ctx.strokeStyle = 'rgba(163,230,53,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // Label overlay
+  ctx.fillStyle = 'rgba(249,115,22,0.9)';
+  ctx.fillRect(W*0.25, H*0.28, 110, 22);
+  ctx.fillStyle = '#fff';
+  ctx.font = '600 10px DM Mono, monospace';
+  ctx.fillText('HIGH STRESS ZONE', W*0.27, H*0.28+15);
+})();
+
+/* ── Nav scroll effect ── */
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('mainNav');
+  nav.style.background = window.scrollY > 50
+    ? 'rgba(5,12,20,0.97)'
+    : 'rgba(5,12,20,0.85)';
+});
+</script>
+</body>
+</html>

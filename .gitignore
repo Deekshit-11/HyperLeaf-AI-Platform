@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.env
+.venv/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# DB (regenerated)
+data/predictions.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large binaries — use Git LFS
+# models/best_model.pth
+# data/X.npy
+# data/X_pca.npy
+# data/y.npy
+data/images/
+data/X.npy
+data/X_pca.npy
+data/y.npy
