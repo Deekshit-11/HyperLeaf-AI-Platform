@@ -508,9 +508,8 @@ elif PAGE == "gradcam":
             colorscale=[[0,"#0d1f35"],[0.3,"#1e3a5f"],[0.6,"#c084fc"],
                         [0.8,"#f97316"],[1.0,"#a3e635"]],
             colorbar=dict(
-                title="Activation",
+                title=dict(text="Activation", font=dict(color="#9ca3af")),
                 tickfont=dict(color="#9ca3af"),
-                titlefont=dict(color="#9ca3af"),
             ),
             hovertemplate="<b>%{x}</b><br>Activation: %{z:.3f}<extra></extra>",
         ))
